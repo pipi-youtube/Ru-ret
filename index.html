@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ルーレット</title>
+<style>
+    
+</style>
+</head>
+<body>
+
+<div class="input-section">
+  <h2>ルーレット【抽選機】</h2>
+  <input type="text" id="item-input" placeholder="中身を入力">
+  <button id="add-button">追加</button>
+  <ul id="item-list"></ul>
+</div>
+<div class="roulette">
+  <div class="wheel"></div>
+  <button class="spin-button">スピン</button>
+</div>
+<script>
+  const wheel = document.querySelector('.wheel');
+  const spinButton = document.querySelector('.spin-button');
+  const itemInput = document.getElementById('item-input');
+  const addButton = document.getElementById('add-button');
+  const itemList = document.getElementById('item-list');
+
+  let spinning = false;
+  let items = [];
+
+  spinButton.addEventListener('click', () => {
+    if (!spinning && items.length > 0) {
+      spinning = true;
+      const randomDegree = Math.floor(Math.random() * 360);
+      const spinDuration = 3000; // milliseconds
+
+      wheel.style.transition = `transform ${spinDuration / 1000}s ease-out`;
+      wheel.style.transform = `rotate(${randomDegree}deg)`;
+
+      setTimeout(() => {
+        spinning = false;
+        wheel.style.transition = 'none';
+        const result = determineResult(randomDegree);
+        alert(`当たったのは${result}です！`);
+      }, spinDuration);
+    }
+  });
+
+  addButton.addEventListener('click', () => {
+    const newItem = itemInput.value;
+    if (newItem.trim() !== '') {
+      items.push(newItem);
+      itemInput.value = '';
+      updateItemList();
+    }
+  });
+
+  itemList.addEventListener('click', (event) => {
+    if (event.target.classList.contains('delete-button')) {
+      const index = parseInt(event.target.dataset.index);
+      items.splice(index, 1);
+      updateItemList();
+    }
+  });
+
+  function determineResult(deg) {
+    const segments = items.length;
+    const segmentAngle = 360 / segments;
+    const normalizedDeg = (deg + 360) % 360;
+    const resultIndex = Math.floor(normalizedDeg / segmentAngle);
+    return items[resultIndex];
+  }
+
+  function updateItemList() {
+    itemList.innerHTML = '';
+    items.forEach((item, index) => {
+      const li = document.createElement('li');
+      li.textContent = item;
+      
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = '削除';
+      deleteButton.classList.add('delete-button');
+      deleteButton.dataset.index = index;
+      
+      li.appendChild(deleteButton);
+      itemList.appendChild(li);
+    });
+  }
+</script>
+</body>
+</html>
