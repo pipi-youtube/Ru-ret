@@ -6,6 +6,7 @@
 <title>ルーレット</title>
 <style>
 
+
 </style>
 
 
@@ -24,6 +25,13 @@
   <div class="wheel"></div>
   <button class="spin-button">開始</button>
 </div>
+<div class="input-section">
+  <label for="num-spins">抽選回数：</label>
+  <input type="number" id="num-spins" placeholder="回数を入力" min="1" value="1">
+  <button id="start-spins-button">抽選を開始</button>
+</div>
+
+
 
 <script>
 // ページが読み込まれたときに保存されたデータをロード
@@ -157,6 +165,60 @@ equalProbabilityButton.addEventListener('click', () => {
   // データを保存
   saveData();
 });
+const startSpinsButton = document.getElementById('start-spins-button');
+const numSpinsInput = document.getElementById('num-spins');
+
+startSpinsButton.addEventListener('click', () => {
+  const numSpins = parseInt(numSpinsInput.value);
+  if (!isNaN(numSpins) && numSpins >= 1) {
+    performSpins(numSpins);
+  }
+});
+
+function performSpins(numSpins) {
+  const spinDuration = 0; // milliseconds
+
+  const spinResults = [];
+
+  for (let i = 0; i < numSpins; i++) {
+    const randomDegree = Math.floor(Math.random() * 360);
+
+    const result = determineResult(randomDegree);
+    spinResults.push(result);
+  }
+
+  displaySpinResults(spinResults);
+}
+
+function displaySpinResults(results) {
+  // You can display the results in a modal, an alert, or any other way you prefer.
+  // Here, we'll use an alert to display the results.
+  const resultsText = results.map((result, index) => `抽選 ${index + 1}: ${result}`).join('\n');
+  alert(resultsText);
+}
+
+// HTMLの印刷ボタン要素を取得
+const printResultsButton = document.getElementById('print-results-button');
+
+// 印刷ボタンのクリックイベントを追加
+printResultsButton.addEventListener('click', () => {
+  printSpinResults();
+});
+
+// 抽選結果を印刷する関数
+function printSpinResults() {
+  const results = []; // 抽選結果の配列を取得（この部分は適宜変更してください）
+
+  // 抽選結果を改行で連結したテキストに変換
+  const resultsText = results.map((result, index) => `抽選 ${index + 1}: ${result}`).join('\n');
+
+  // 新しいウィンドウを開いて、結果をテキストとして表示
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`<pre>${resultsText}</pre>`);
+
+  // ウィンドウの内容を印刷
+  printWindow.print();
+}
 
 </script>
 </body>
