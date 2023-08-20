@@ -5,109 +5,156 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ルーレット</title>
 <style>
-      body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f0f0f0;
-  }
-
+@media (max-width: 600px) {
   .input-section {
-    text-align: center;
-    margin-bottom: 20px;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
-  h2 {
-    margin: 0 0 10px;
-    font-size: 24px;
+  #item-input,
+  #item-probability,
+  #add-button,
+  #equal-probability-button {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 10px;
   }
+}
 
-  #item-input {
-    padding: 5px;
-    width: 200px;
-  }
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #f0f0f0;
+}
 
-  #add-button {
-    padding: 5px 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
+.input-section {
+  text-align: center;
+  margin-bottom: 20px;
+}
 
-  ul {
-    list-style: none;
-    padding: 0;
-  }
+h2 {
+  margin: 0 0 10px;
+  font-size: 24px;
+}
 
-  li {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 5px;
-    background-color: white;
-    border: 1px solid #ccc;
-    margin-bottom: 5px;
-  }
+#item-input,
+#item-probability {
+  padding: 5px;
+  width: 150px;
+  margin-right: 10px;
+}
 
-  .delete-button {
-    padding: 2px 5px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
+#add-button,
+#equal-probability-button {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-left: 10px;
+}
 
-  .roulette {
-    text-align: center;
-  }
+ul {
+  list-style: none;
+  padding: 0;
+}
 
-  .wheel {
-    width: 200px;
-    height: 200px;
-    background-color: #f0f0f0;
-    border-radius: 50%;
-    position: relative;
-    margin: 0 auto;
-    transition: transform 0.3s ease-out;
-    transform-origin: 50% 50%;
-  }
+li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px;
+  background-color: white;
+  border: 1px solid #ccc;
+  margin-bottom: 5px;
+}
 
-  .spin-button {
-    padding: 10px 20px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    cursor: pointer;
-    margin-top: 20px;
-  }
+.delete-button {
+  padding: 2px 5px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.roulette {
+  text-align: center;
+}
+
+.wheel {
+  width: 200px;
+  height: 200px;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  position: relative;
+  margin: 0 auto;
+  transition: transform 0.3s ease-out;
+  transform-origin: 50% 50%;
+}
+
+.spin-button {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
 </style>
+
+
 </head>
 <body>
 
 <div class="input-section">
   <h2>ルーレット【抽選機】</h2>
   <input type="text" id="item-input" placeholder="中身を入力">
+  <input type="number" id="item-probability" placeholder="確率（0以上の数値）">
   <button id="add-button">追加</button>
+  <button id="equal-probability-button">確率を平等にする</button>
   <ul id="item-list"></ul>
 </div>
 <div class="roulette">
   <div class="wheel"></div>
   <button class="spin-button">開始</button>
 </div>
+
 <script>
+// ページが読み込まれたときに保存されたデータをロード
+window.addEventListener('load', () => {
+  const storedItems = localStorage.getItem('rouletteItems');
+  const storedProbabilities = localStorage.getItem('rouletteProbabilities');
+
+  if (storedItems && storedProbabilities) {
+    items = JSON.parse(storedItems);
+    itemProbabilities = JSON.parse(storedProbabilities);
+    updateItemList();
+  }
+});
+
+// データの保存
+function saveData() {
+  localStorage.setItem('rouletteItems', JSON.stringify(items));
+  localStorage.setItem('rouletteProbabilities', JSON.stringify(itemProbabilities));
+}
+
   const wheel = document.querySelector('.wheel');
   const spinButton = document.querySelector('.spin-button');
   const itemInput = document.getElementById('item-input');
+  const itemProbabilityInput = document.getElementById('item-probability');
   const addButton = document.getElementById('add-button');
+  const equalProbabilityButton = document.getElementById('equal-probability-button');
   const itemList = document.getElementById('item-list');
 
   let spinning = false;
   let items = [];
+  let itemProbabilities = [];
 
   spinButton.addEventListener('click', () => {
     if (!spinning && items.length > 0) {
@@ -129,9 +176,22 @@
 
   addButton.addEventListener('click', () => {
     const newItem = itemInput.value;
-    if (newItem.trim() !== '') {
+    const newProbability = parseFloat(itemProbabilityInput.value);
+
+    if (newItem.trim() !== '' && !isNaN(newProbability) && newProbability >= 0) {
       items.push(newItem);
+      itemProbabilities.push(newProbability);
       itemInput.value = '';
+      itemProbabilityInput.value = '';
+      updateItemList();
+    }
+  });
+
+  equalProbabilityButton.addEventListener('click', () => {
+    const segments = items.length;
+    if (segments > 0) {
+      const equalProbability = 100 / segments;
+      itemProbabilities = new Array(segments).fill(equalProbability);
       updateItemList();
     }
   });
@@ -140,33 +200,64 @@
     if (event.target.classList.contains('delete-button')) {
       const index = parseInt(event.target.dataset.index);
       items.splice(index, 1);
+      itemProbabilities.splice(index, 1);
       updateItemList();
     }
   });
 
   function determineResult(deg) {
-    const segments = items.length;
-    const segmentAngle = 360 / segments;
-    const normalizedDeg = (deg + 360) % 360;
-    const resultIndex = Math.floor(normalizedDeg / segmentAngle);
-    return items[resultIndex];
+    const totalProbability = itemProbabilities.reduce((sum, prob) => sum + prob, 0);
+
+    let currentAngle = 0;
+    for (let i = 0; i < items.length; i++) {
+      const segmentAngle = 360 * (itemProbabilities[i] / totalProbability);
+      if (deg >= currentAngle && deg < currentAngle + segmentAngle) {
+        return items[i];
+      }
+      currentAngle += segmentAngle;
+    }
+    return '';
   }
 
   function updateItemList() {
     itemList.innerHTML = '';
     items.forEach((item, index) => {
       const li = document.createElement('li');
-      li.textContent = item;
-      
+      li.textContent = `${item} (${itemProbabilities[index]}%)`;
+
       const deleteButton = document.createElement('button');
       deleteButton.textContent = '削除';
       deleteButton.classList.add('delete-button');
       deleteButton.dataset.index = index;
-      
+
       li.appendChild(deleteButton);
       itemList.appendChild(li);
     });
   }
+// データの保存
+function saveData() {
+  localStorage.setItem('rouletteItems', JSON.stringify(items));
+  localStorage.setItem('rouletteProbabilities', JSON.stringify(itemProbabilities));
+}
+
+// アイテムが追加されたときにデータを保存
+addButton.addEventListener('click', () => {
+  // 既存の追加処理
+  // ...
+
+  // データを保存
+  saveData();
+});
+
+// 確率が変更されたときにデータを保存
+equalProbabilityButton.addEventListener('click', () => {
+  // 既存の平等確率処理
+  // ...
+
+  // データを保存
+  saveData();
+});
+
 </script>
 </body>
 </html>
